@@ -8,12 +8,11 @@ export const BENCHMARKS = {
 };
 
 // ─── Color logic ──────────────────────────────────────────────────────
-// near = within 20% below benchmark, e.g. openRate near = >= 18.72%
 export function getRateColor(value, benchmark) {
   const nearThreshold = benchmark * 0.8;
-  if (value >= benchmark) return '#16a34a';       // green
-  if (value >= nearThreshold) return '#d97706';   // amber
-  return '#dc2626';                               // red
+  if (value >= benchmark) return '#16a34a';
+  if (value >= nearThreshold) return '#d97706';
+  return '#dc2626';
 }
 
 export function getCTORColor(value) {
@@ -28,96 +27,89 @@ export function getUnsubColor(value) {
   return '#dc2626';
 }
 
-// ─── Sample journey data ───────────────────────────────────────────────
-// Replace this array with a fetch from Google Sheets CSV when ready.
-export const journeys = [
-  {
-    id: 1,
-    name: 'Open Day Nurture',
-    type: 'Multi-Step',
-    status: 'Active',
-    sends: 4820,
-    opens: 1265,
-    clicks: 214,
-    unsubs: 3,
-    week: 'W13 2026',
-  },
-  {
-    id: 2,
-    name: 'Admissions Welcome',
-    type: 'Triggered',
-    status: 'Active',
-    sends: 3110,
-    opens: 892,
-    clicks: 178,
-    unsubs: 2,
-    week: 'W13 2026',
-  },
-  {
-    id: 3,
-    name: 'Re-enquiry Winback',
-    type: 'Multi-Step',
-    status: 'Active',
-    sends: 2540,
-    opens: 431,
-    clicks: 52,
-    unsubs: 5,
-    week: 'W13 2026',
-  },
-  {
-    id: 4,
-    name: 'XWA Conversations Webinar',
-    type: 'Event',
-    status: 'Active',
-    sends: 1980,
-    opens: 623,
-    clicks: 145,
-    unsubs: 1,
-    week: 'W13 2026',
-  },
-  {
-    id: 5,
-    name: 'Prospectus Download',
-    type: 'Triggered',
-    status: 'Active',
-    sends: 3750,
-    opens: 1050,
-    clicks: 188,
-    unsubs: 4,
-    week: 'W13 2026',
-  },
-  {
-    id: 6,
-    name: 'Deposit Reminder',
-    type: 'Triggered',
-    status: 'Paused',
-    sends: 870,
-    opens: 162,
-    clicks: 18,
-    unsubs: 1,
-    week: 'W12 2026',
-  },
-];
+// ─── Google Sheets CSV feed ────────────────────────────────────────────
+// To swap the data source, update this URL only.
+const SHEET_URL =
+  'https://docs.google.com/spreadsheets/d/1kjiayOLkpd8pJ1Uron3DTHxD6dcLDlSNqEO5cGcaBmQ/gviz/tq?tqx=out:csv&sheet=SG';
 
-// ─── Derived metrics ───────────────────────────────────────────────────
-export const journeysWithMetrics = journeys.map((j) => {
-  const openRate = (j.opens / j.sends) * 100;
-  const ctr = (j.clicks / j.sends) * 100;
-  const ctor = (j.clicks / j.opens) * 100;
-  const unsubRate = (j.unsubs / j.sends) * 100;
-  return { ...j, openRate, ctr, ctor, unsubRate };
-});
+// Minimal CSV parser — handles quoted fields with embedded commas/newlines.
+function parseRow(row) {
+  const fields = [];
+  let cur = '';
+  let inQuotes = false;
+  for (const ch of row) {
+    if (ch === '"') {
+      inQuotes = !inQuotes;
+    } else if (ch === ',' && !inQuotes) {
+      fields.push(cur);
+      cur = '';
+    } else {
+      cur += ch;
+    }
+  }
+  fields.push(cur);
+  return fields;
+}
 
-// ─── KPI aggregates ────────────────────────────────────────────────────
-const active = journeysWithMetrics.filter((j) => j.status === 'Active');
+function parseCSV(text) {
+  // Normalise line endings (\r\n → \n) before splitting.
+  const lines = text.trim().replace(/\r\n/g, '\n').replace(/\r/g, '\n').split('\n');
+  // Skip the header row (index 0), ignore blank lines.
+  return lines
+    .slice(1)
+    .filter((l) => l.trim())
+    .map((line, i) => {
+      const [
+        JourneyName,
+        JourneyStatus,
+        TotalSends,
+        UniqueOpens,
+        OpenRate,
+        UniqueClicks,
+        CTR,
+        CTOR,
+        Unsubscribes,
+        UnsubRate,
+        WeekEnding,
+        // BU — not needed in the UI, intentionally omitted
+      ] = parseRow(line).map((f) => f.trim()); // trim every field
 
-export const kpis = {
-  totalSends: journeysWithMetrics.reduce((s, j) => s + j.sends, 0),
-  avgOpenRate:
-    active.reduce((s, j) => s + j.openRate, 0) / active.length,
-  avgCTR:
-    active.reduce((s, j) => s + j.ctr, 0) / active.length,
-  avgCTOR:
-    active.reduce((s, j) => s + j.ctor, 0) / active.length,
-  activeJourneys: active.length,
-};
+      return {
+        id: i + 1,
+        name: JourneyName,
+        type: 'Journey Builder',      // not in CSV; default value
+        status: JourneyStatus,
+        sends: Number(TotalSends),
+        opens: Number(UniqueOpens),
+        openRate: Number(OpenRate),   // pre-calculated in sheet
+        clicks: Number(UniqueClicks),
+        ctr: Number(CTR),             // pre-calculated in sheet
+        ctor: Number(CTOR),           // pre-calculated in sheet
+        unsubs: Number(Unsubscribes),
+        unsubRate: Number(UnsubRate), // pre-calculated in sheet
+        week: WeekEnding,
+      };
+    });
+}
+
+// Exported async fetch — call this from App.jsx on mount.
+export async function fetchJourneys() {
+  const res = await fetch(SHEET_URL);
+  if (!res.ok) throw new Error(`Could not load sheet (HTTP ${res.status})`);
+  const text = await res.text();
+  return parseCSV(text);
+}
+
+// ─── KPI aggregates (pure — computed from fetched data) ────────────────
+export function computeKPIs(journeys) {
+  const n = journeys.length || 1;
+  // "Running" is the live status value from SFMC exported via Google Sheets.
+  const running = journeys.filter((j) => j.status.trim().toLowerCase() === 'running');
+  return {
+    totalSends:     journeys.reduce((s, j) => s + j.sends, 0),
+    avgOpenRate:    journeys.reduce((s, j) => s + j.openRate, 0) / n,
+    avgCTR:         journeys.reduce((s, j) => s + j.ctr, 0) / n,
+    avgCTOR:        journeys.reduce((s, j) => s + j.ctor, 0) / n,
+    activeJourneys: running.length,
+  };
+}

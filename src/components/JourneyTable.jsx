@@ -1,6 +1,5 @@
 import { useState } from 'react';
 import {
-  journeysWithMetrics,
   getRateColor,
   getCTORColor,
   BENCHMARKS,
@@ -8,7 +7,6 @@ import {
 
 const COLS = [
   { key: 'name',     label: 'Journey Name', align: 'left',   minW: 190 },
-  { key: 'type',     label: 'Type',         align: 'left',   minW: 100 },
   { key: 'status',   label: 'Status',       align: 'center', minW: 80  },
   { key: 'sends',    label: 'Sends',        align: 'right',  minW: 80  },
   { key: 'opens',    label: 'Opens',        align: 'right',  minW: 70  },
@@ -38,16 +36,19 @@ function metricColor(key, val) {
 }
 
 const STATUS_STYLES = {
-  Active: { bg: 'rgba(22,163,74,0.12)', color: '#4ade80', border: 'rgba(22,163,74,0.25)' },
-  Paused: { bg: 'rgba(234,179,8,0.12)',  color: '#fbbf24', border: 'rgba(234,179,8,0.25)'  },
-  Draft:  { bg: 'rgba(100,116,139,0.12)', color: '#94a3b8', border: 'rgba(100,116,139,0.25)' },
+  Running: { bg: 'rgba(22,163,74,0.12)',   color: '#4ade80', border: 'rgba(22,163,74,0.25)'   },
+  Stopped: { bg: 'rgba(234,179,8,0.12)',   color: '#fbbf24', border: 'rgba(234,179,8,0.25)'   },
+  Paused:  { bg: 'rgba(234,179,8,0.12)',   color: '#fbbf24', border: 'rgba(234,179,8,0.25)'   },
+  Draft:   { bg: 'rgba(100,116,139,0.12)', color: '#94a3b8', border: 'rgba(100,116,139,0.25)' },
+  // Fallback for any other status values
+  Default: { bg: 'rgba(100,116,139,0.12)', color: '#94a3b8', border: 'rgba(100,116,139,0.25)' },
 };
 
-export default function JourneyTable() {
+export default function JourneyTable({ journeys }) {
   const [sortKey, setSortKey] = useState('sends');
   const [sortDir, setSortDir] = useState('desc');
 
-  const sorted = [...journeysWithMetrics].sort((a, b) => {
+  const sorted = [...journeys].sort((a, b) => {
     const va = a[sortKey], vb = b[sortKey];
     if (typeof va === 'number') return sortDir === 'asc' ? va - vb : vb - va;
     return sortDir === 'asc'
@@ -100,7 +101,7 @@ export default function JourneyTable() {
                   const isMetric = METRIC_COLS.has(col.key);
                   const color = isMetric ? metricColor(col.key, val) : null;
                   const isStatus = col.key === 'status';
-                  const s = isStatus ? (STATUS_STYLES[val] || STATUS_STYLES.Draft) : null;
+                  const s = isStatus ? (STATUS_STYLES[val] || STATUS_STYLES.Default) : null;
 
                   return (
                     <td
@@ -198,6 +199,8 @@ const styles = {
   },
   scrollWrapper: {
     overflowX: 'auto',
+    overflowY: 'auto',
+    maxHeight: '420px',
   },
   table: {
     width: '100%',
@@ -214,6 +217,9 @@ const styles = {
     whiteSpace: 'nowrap',
     userSelect: 'none',
     background: '#0d1117',
+    position: 'sticky',
+    top: 0,
+    zIndex: 10,
   },
   thInner: {
     display: 'inline-flex',

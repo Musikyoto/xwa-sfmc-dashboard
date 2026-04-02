@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import {
   BarChart,
   Bar,
@@ -10,6 +11,8 @@ import {
   Cell,
   LabelList,
 } from 'recharts';
+
+const DEFAULT_VISIBLE = 10;
 
 const GREEN  = '#16a34a';
 const AMBER  = '#d97706';
@@ -86,8 +89,19 @@ export default function MetricChart({
   legendItems = [],
   colorFn,
 }) {
-  const maxVal = Math.max(...data.map((d) => d[dataKey]), benchmarkValue) * 1.25;
-  const chartHeight = data.length * 46 + 16;
+  const [expanded, setExpanded]   = useState(false);
+  const [sortMode, setSortMode]   = useState('alpha'); // 'alpha' | 'perf'
+
+  const sorted = [...data].sort((a, b) =>
+    sortMode === 'alpha'
+      ? a.name.localeCompare(b.name)
+      : b[dataKey] - a[dataKey],
+  );
+  const visible = expanded ? sorted : sorted.slice(0, DEFAULT_VISIBLE);
+  const hasMore = sorted.length > DEFAULT_VISIBLE;
+
+  const maxVal = Math.max(...visible.map((d) => d[dataKey]), benchmarkValue) * 1.25;
+  const chartHeight = visible.length * 46 + 16;
   const badge = computeBadge(data, dataKey, colorFn, benchmarkPill);
 
   return (
@@ -117,11 +131,30 @@ export default function MetricChart({
         </span>
       </div>
 
+      {/* ── Sort toggle ── */}
+      <div style={styles.sortRow}>
+        {[
+          { key: 'alpha', label: 'A–Z' },
+          { key: 'perf',  label: 'By Performance' },
+        ].map((opt) => (
+          <button
+            key={opt.key}
+            style={{
+              ...styles.sortBtn,
+              ...(sortMode === opt.key ? styles.sortBtnActive : {}),
+            }}
+            onClick={() => setSortMode(opt.key)}
+          >
+            {opt.label}
+          </button>
+        ))}
+      </div>
+
       {/* ── Chart ── */}
       <ResponsiveContainer width="100%" height={chartHeight}>
         <BarChart
           layout="vertical"
-          data={data}
+          data={visible}
           margin={{ top: 8, right: 56, left: 0, bottom: 4 }}
           barCategoryGap="28%"
         >
@@ -167,7 +200,7 @@ export default function MetricChart({
             }}
           />
           <Bar dataKey={dataKey} radius={[0, 3, 3, 0]} maxBarSize={22}>
-            {data.map((entry) => (
+            {visible.map((entry) => (
               <Cell key={entry.name} fill={colorFn(entry[dataKey])} opacity={0.85} />
             ))}
             <LabelList content={<ValueLabel />} />
@@ -175,14 +208,23 @@ export default function MetricChart({
         </BarChart>
       </ResponsiveContainer>
 
-      {/* ── Legend ── */}
-      <div style={styles.legendGroup}>
-        {legendItems.map((item) => (
-          <span key={item.label} style={styles.legendItem}>
-            <span style={{ ...styles.legendDot, background: item.color }} />
-            <span style={{ ...styles.legendText, color: item.color }}>{item.label}</span>
-          </span>
-        ))}
+      {/* ── Legend + expand toggle ── */}
+      <div style={styles.legendRow}>
+        <div style={styles.legendGroup}>
+          {legendItems.map((item) => (
+            <span key={item.label} style={styles.legendItem}>
+              <span style={{ ...styles.legendDot, background: item.color }} />
+              <span style={{ ...styles.legendText, color: item.color }}>{item.label}</span>
+            </span>
+          ))}
+        </div>
+        {hasMore && (
+          <button style={styles.expandBtn} onClick={() => setExpanded((e) => !e)}>
+            {expanded
+              ? 'Show less'
+              : `Show all ${sorted.length} journeys`}
+          </button>
+        )}
       </div>
     </div>
   );
@@ -204,6 +246,28 @@ const styles = {
     padding: '16px 20px 12px',
     overflow: 'hidden',
   },
+  sortRow: {
+    display: 'flex',
+    gap: '4px',
+    marginBottom: '4px',
+  },
+  sortBtn: {
+    padding: '3px 10px',
+    fontSize: '11px',
+    fontWeight: 500,
+    fontFamily: 'inherit',
+    borderRadius: '5px',
+    border: '1px solid #30363d',
+    background: 'transparent',
+    color: '#4b5563',
+    cursor: 'pointer',
+    transition: 'background 0.12s, color 0.12s, border-color 0.12s',
+  },
+  sortBtnActive: {
+    background: '#21262d',
+    border: '1px solid #3b82f6',
+    color: '#93c5fd',
+  },
   headerRow: {
     display: 'flex',
     alignItems: 'center',
@@ -212,14 +276,34 @@ const styles = {
     gap: '8px',
     marginBottom: '8px',
   },
+  legendRow: {
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    flexWrap: 'wrap',
+    gap: '10px',
+    marginTop: '12px',
+    paddingTop: '12px',
+    borderTop: '1px solid #21262d',
+  },
   legendGroup: {
     display: 'flex',
     alignItems: 'center',
     flexWrap: 'wrap',
     gap: '14px',
-    marginTop: '12px',
-    paddingTop: '12px',
-    borderTop: '1px solid #21262d',
+  },
+  expandBtn: {
+    background: 'transparent',
+    border: '1px solid #30363d',
+    borderRadius: '6px',
+    color: '#6b7280',
+    fontSize: '11px',
+    fontWeight: 500,
+    padding: '4px 12px',
+    cursor: 'pointer',
+    fontFamily: 'inherit',
+    whiteSpace: 'nowrap',
+    transition: 'border-color 0.15s, color 0.15s',
   },
   legendItem: {
     display: 'inline-flex',

@@ -1,21 +1,39 @@
+import { useState, useEffect, useMemo } from 'react';
 import KPIStrip from './components/KPIStrip';
 import JourneyTable from './components/JourneyTable';
 import MetricChart from './components/MetricChart';
 import {
-  journeysWithMetrics,
+  fetchJourneys,
+  computeKPIs,
   BENCHMARKS,
   getRateColor,
   getCTORColor,
 } from './data/journeyData';
 
-const chartData = journeysWithMetrics.map((j) => ({
-  name: j.name,
-  openRate: j.openRate,
-  ctr: j.ctr,
-  ctor: j.ctor,
-}));
-
 export default function App() {
+  const [journeys, setJourneys] = useState([]);
+  const [loading, setLoading]   = useState(true);
+  const [error, setError]       = useState(null);
+
+  useEffect(() => {
+    fetchJourneys()
+      .then((data) => { setJourneys(data); setLoading(false); })
+      .catch((err)  => { setError(err.message); setLoading(false); });
+  }, []);
+
+  const kpis = useMemo(
+    () => (journeys.length ? computeKPIs(journeys) : null),
+    [journeys],
+  );
+
+  const chartData = useMemo(
+    () => journeys.map((j) => ({ name: j.name, openRate: j.openRate, ctr: j.ctr, ctor: j.ctor })),
+    [journeys],
+  );
+
+  // Derive the week label from the first journey row, or fall back to today.
+  const weekLabel = journeys[0]?.week ?? new Date().toLocaleDateString('en-GB');
+
   return (
     <div style={styles.root}>
       {/* ── Masthead ── */}
@@ -37,72 +55,107 @@ export default function App() {
               <span style={styles.liveGlow} />
               <span style={styles.livePillText}>LIVE</span>
             </div>
-            <div style={styles.weekLabel}>W13 · 2026</div>
+            <div style={styles.weekLabel}>{weekLabel}</div>
           </div>
         </div>
       </header>
 
       {/* ── Page body ── */}
       <main style={styles.body}>
-        <KPIStrip />
 
-        <section style={styles.section}>
-          <SectionLabel>Journey Performance</SectionLabel>
-          <JourneyTable />
-        </section>
+        {/* ── Loading state ── */}
+        {loading && (
+          <div style={styles.stateBox}>
+            <div style={styles.spinner} />
+            <p style={styles.stateText}>Loading journey data…</p>
+          </div>
+        )}
 
-        <section style={styles.section}>
-          <SectionLabel>Open Rate by Journey</SectionLabel>
-          <MetricChart
-            data={chartData}
-            dataKey="openRate"
-            benchmarkValue={BENCHMARKS.openRate}
-            benchmarkPill={`Benchmark: ${BENCHMARKS.openRate}%`}
-            legendItems={[
-              { color: '#16a34a', label: `Above ${BENCHMARKS.openRate}%` },
-              { color: '#d97706', label: 'Within 5% of benchmark' },
-              { color: '#dc2626', label: `Below ${BENCHMARKS.openRate}%` },
-            ]}
-            colorFn={(v) => getRateColor(v, BENCHMARKS.openRate)}
-          />
-        </section>
+        {/* ── Error state ── */}
+        {!loading && error && (
+          <div style={{ ...styles.stateBox, ...styles.errorBox }}>
+            <p style={styles.errorIcon}>⚠</p>
+            <p style={styles.stateText}>Failed to load data</p>
+            <p style={styles.errorDetail}>{error}</p>
+            <button
+              style={styles.retryBtn}
+              onClick={() => {
+                setLoading(true);
+                setError(null);
+                fetchJourneys()
+                  .then((data) => { setJourneys(data); setLoading(false); })
+                  .catch((err)  => { setError(err.message); setLoading(false); });
+              }}
+            >
+              Retry
+            </button>
+          </div>
+        )}
 
-        <section style={styles.section}>
-          <SectionLabel>Click-Through Rate (CTR) by Journey</SectionLabel>
-          <MetricChart
-            data={chartData}
-            dataKey="ctr"
-            benchmarkValue={BENCHMARKS.ctr}
-            benchmarkPill={`Benchmark: ${BENCHMARKS.ctr}%`}
-            legendItems={[
-              { color: '#16a34a', label: `Above ${BENCHMARKS.ctr}%` },
-              { color: '#d97706', label: 'Within 2% of benchmark' },
-              { color: '#dc2626', label: `Below ${BENCHMARKS.ctr}%` },
-            ]}
-            colorFn={(v) => getRateColor(v, BENCHMARKS.ctr)}
-          />
-        </section>
+        {/* ── Dashboard (only rendered once data is ready) ── */}
+        {!loading && !error && kpis && (
+          <>
+            <KPIStrip kpis={kpis} />
 
-        <section style={styles.section}>
-          <SectionLabel>Click-to-Open Rate (CTOR) by Journey</SectionLabel>
-          <MetricChart
-            data={chartData}
-            dataKey="ctor"
-            benchmarkValue={BENCHMARKS.ctorLow}
-            benchmarkPill={`Benchmark: ${BENCHMARKS.ctorLow}–${BENCHMARKS.ctorHigh}%`}
-            legendItems={[
-              { color: '#16a34a', label: 'Above 20%' },
-              { color: '#d97706', label: '10–20% (approaching)' },
-              { color: '#dc2626', label: 'Below 10%' },
-            ]}
-            colorFn={getCTORColor}
-          />
-        </section>
+            <section style={styles.section}>
+              <SectionLabel>Journey Performance</SectionLabel>
+              <JourneyTable journeys={journeys} />
+            </section>
 
-        <footer style={styles.footer}>
-          <span>Sample data · Benchmarks: Global Education Industry 2025–2026</span>
-          <span>SFMC Dashboard v1.0</span>
-        </footer>
+            <section style={styles.section}>
+              <SectionLabel>Open Rate by Journey</SectionLabel>
+              <MetricChart
+                data={chartData}
+                dataKey="openRate"
+                benchmarkValue={BENCHMARKS.openRate}
+                benchmarkPill={`Benchmark: ${BENCHMARKS.openRate}%`}
+                legendItems={[
+                  { color: '#16a34a', label: `Above ${BENCHMARKS.openRate}%` },
+                  { color: '#d97706', label: 'Within 5% of benchmark' },
+                  { color: '#dc2626', label: `Below ${BENCHMARKS.openRate}%` },
+                ]}
+                colorFn={(v) => getRateColor(v, BENCHMARKS.openRate)}
+              />
+            </section>
+
+            <section style={styles.section}>
+              <SectionLabel>Click-Through Rate (CTR) by Journey</SectionLabel>
+              <MetricChart
+                data={chartData}
+                dataKey="ctr"
+                benchmarkValue={BENCHMARKS.ctr}
+                benchmarkPill={`Benchmark: ${BENCHMARKS.ctr}%`}
+                legendItems={[
+                  { color: '#16a34a', label: `Above ${BENCHMARKS.ctr}%` },
+                  { color: '#d97706', label: 'Within 2% of benchmark' },
+                  { color: '#dc2626', label: `Below ${BENCHMARKS.ctr}%` },
+                ]}
+                colorFn={(v) => getRateColor(v, BENCHMARKS.ctr)}
+              />
+            </section>
+
+            <section style={styles.section}>
+              <SectionLabel>Click-to-Open Rate (CTOR) by Journey</SectionLabel>
+              <MetricChart
+                data={chartData}
+                dataKey="ctor"
+                benchmarkValue={BENCHMARKS.ctorLow}
+                benchmarkPill={`Benchmark: ${BENCHMARKS.ctorLow}–${BENCHMARKS.ctorHigh}%`}
+                legendItems={[
+                  { color: '#16a34a', label: 'Above 20%' },
+                  { color: '#d97706', label: '10–20% (approaching)' },
+                  { color: '#dc2626', label: 'Below 10%' },
+                ]}
+                colorFn={getCTORColor}
+              />
+            </section>
+
+            <footer style={styles.footer}>
+              <span>Google Sheets live feed · Benchmarks: Global Education Industry 2025–2026</span>
+              <span>SFMC Dashboard v1.0</span>
+            </footer>
+          </>
+        )}
       </main>
     </div>
   );
@@ -222,7 +275,6 @@ const styles = {
     background: '#16a34a',
     boxShadow: '0 0 6px #16a34a',
     display: 'inline-block',
-    animation: 'none',
   },
   livePillText: {
     fontSize: '10px',
@@ -245,6 +297,56 @@ const styles = {
   },
   section: {
     marginBottom: '36px',
+  },
+
+  /* ── Loading / Error states ── */
+  stateBox: {
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: '12px',
+    minHeight: '320px',
+    background: '#161b22',
+    border: '1px solid #21262d',
+    borderRadius: '8px',
+  },
+  errorBox: {
+    borderColor: 'rgba(220,38,38,0.3)',
+    background: 'rgba(220,38,38,0.05)',
+  },
+  spinner: {
+    width: '28px',
+    height: '28px',
+    border: '2px solid #21262d',
+    borderTop: '2px solid #3b82f6',
+    borderRadius: '50%',
+    animation: 'spin 0.8s linear infinite',
+  },
+  stateText: {
+    fontSize: '13px',
+    color: '#6b7280',
+    fontWeight: 500,
+  },
+  errorIcon: {
+    fontSize: '24px',
+    color: '#dc2626',
+  },
+  errorDetail: {
+    fontSize: '11px',
+    color: '#4b5563',
+    fontFamily: 'monospace',
+  },
+  retryBtn: {
+    marginTop: '4px',
+    padding: '6px 18px',
+    background: 'transparent',
+    border: '1px solid #30363d',
+    borderRadius: '6px',
+    color: '#9ca3af',
+    fontSize: '12px',
+    cursor: 'pointer',
+    fontFamily: 'inherit',
   },
 
   /* ── Footer ── */

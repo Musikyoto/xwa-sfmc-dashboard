@@ -1,54 +1,53 @@
-import { kpis, getRateColor, getCTORColor, BENCHMARKS } from '../data/journeyData';
+import { getRateColor, getCTORColor, BENCHMARKS } from '../data/journeyData';
 
 function delta(value, benchmark) {
   const d = value - benchmark;
   return { sign: d >= 0 ? '+' : '', value: d.toFixed(1) };
 }
 
-const cards = [
-  {
-    label: 'Total Sends',
-    value: kpis.totalSends.toLocaleString(),
-    sub: 'All journeys · W13',
-    accent: '#3b82f6',
-    delta: null,
-    wide: false,
-  },
-  {
-    label: 'Avg Open Rate',
-    value: `${kpis.avgOpenRate.toFixed(1)}%`,
-    sub: `Benchmark ${BENCHMARKS.openRate}%`,
-    accent: getRateColor(kpis.avgOpenRate, BENCHMARKS.openRate),
-    delta: delta(kpis.avgOpenRate, BENCHMARKS.openRate),
-    wide: false,
-  },
-  {
-    label: 'Avg CTR',
-    value: `${kpis.avgCTR.toFixed(2)}%`,
-    sub: `Benchmark ${BENCHMARKS.ctr}%`,
-    accent: getRateColor(kpis.avgCTR, BENCHMARKS.ctr),
-    delta: delta(kpis.avgCTR, BENCHMARKS.ctr),
-    wide: false,
-  },
-  {
-    label: 'Avg CTOR',
-    value: `${kpis.avgCTOR.toFixed(1)}%`,
-    sub: `Benchmark ${BENCHMARKS.ctorLow}–${BENCHMARKS.ctorHigh}%`,
-    accent: getCTORColor(kpis.avgCTOR),
-    delta: delta(kpis.avgCTOR, BENCHMARKS.ctorLow),
-    wide: false,
-  },
-  {
-    label: 'Active Journeys',
-    value: kpis.activeJourneys,
-    sub: 'Singapore BU',
-    accent: '#3b82f6',
-    delta: null,
-    wide: false,
-  },
-];
+function buildCards(kpis) {
+  return [
+    {
+      label: 'Total Sends',
+      value: kpis.totalSends.toLocaleString(),
+      sub: 'All journeys',
+      accent: '#3b82f6',
+      delta: null,
+    },
+    {
+      label: 'Avg Open Rate',
+      value: `${kpis.avgOpenRate.toFixed(1)}%`,
+      sub: `Benchmark ${BENCHMARKS.openRate}%`,
+      accent: getRateColor(kpis.avgOpenRate, BENCHMARKS.openRate),
+      delta: delta(kpis.avgOpenRate, BENCHMARKS.openRate),
+    },
+    {
+      label: 'Avg CTR',
+      value: `${kpis.avgCTR.toFixed(2)}%`,
+      sub: `Benchmark ${BENCHMARKS.ctr}%`,
+      accent: getRateColor(kpis.avgCTR, BENCHMARKS.ctr),
+      delta: delta(kpis.avgCTR, BENCHMARKS.ctr),
+    },
+    {
+      label: 'Avg CTOR',
+      value: `${kpis.avgCTOR.toFixed(1)}%`,
+      sub: `Benchmark ${BENCHMARKS.ctorLow}–${BENCHMARKS.ctorHigh}%`,
+      accent: getCTORColor(kpis.avgCTOR),
+      delta: delta(kpis.avgCTOR, BENCHMARKS.ctorLow),
+    },
+    {
+      label: 'Active Journeys',
+      value: kpis.activeJourneys,
+      sub: 'Singapore BU',
+      accent: '#3b82f6',
+      delta: null,
+    },
+  ];
+}
 
-export default function KPIStrip() {
+export default function KPIStrip({ kpis }) {
+  const cards = buildCards(kpis);
+
   return (
     <div style={styles.grid}>
       {cards.map((c) => (
@@ -68,7 +67,7 @@ export default function KPIStrip() {
               </span>
             )}
           </div>
-          <p style={{ ...styles.value, color: c.accent }} className="num">{c.value}</p>
+          <p style={{ ...styles.value, color: c.accent }}>{c.value}</p>
           <p style={styles.sub}>{c.sub}</p>
           <div style={{ ...styles.accentBar, background: c.accent }} />
         </div>
@@ -77,7 +76,6 @@ export default function KPIStrip() {
   );
 }
 
-// tiny helper — returns hex with alpha as rgba
 function hexAlpha(hex, alpha) {
   const r = parseInt(hex.slice(1, 3), 16);
   const g = parseInt(hex.slice(3, 5), 16);

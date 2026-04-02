@@ -3,8 +3,8 @@
   "configurations": [
     {
       "name": "sfmc-dashboard",
-      "runtimeExecutable": "npm",
-      "runtimeArgs": ["run", "dev"],
+      "runtimeExecutable": "/usr/local/bin/node",
+      "runtimeArgs": ["/Users/adrianw/Desktop/SFMC-Dashboard/node_modules/.bin/vite"],
       "port": 5173
     }
   ]
