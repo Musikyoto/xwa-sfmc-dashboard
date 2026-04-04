@@ -2,6 +2,7 @@ import { useState, useEffect, useMemo } from 'react';
 import KPIStrip from './components/KPIStrip';
 import JourneyTable from './components/JourneyTable';
 import MetricChart from './components/MetricChart';
+import TopBottomCallout from './components/TopBottomCallout';
 import {
   fetchJourneys,
   computeKPIs,
@@ -96,6 +97,8 @@ export default function App() {
         {!loading && !error && kpis && (
           <>
             <KPIStrip kpis={kpis} />
+
+            <TopBottomCallout journeys={journeys} />
 
             <section style={styles.section}>
               <SectionLabel>Journey Performance</SectionLabel>
