@@ -86,7 +86,7 @@ export default function JourneyTable({ journeys }) {
       </div>
 
       {/* ── Table ── */}
-      <div style={styles.scrollWrapper}>
+      <div className="table-scroll-wrapper" style={styles.scrollWrapper}>
         <table style={styles.table}>
           <thead>
             <tr>

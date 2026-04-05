@@ -38,9 +38,9 @@ export default function TopBottomCallout({ journeys }) {
   if (journeys.length < 1) return null;
 
   return (
-    <div style={styles.card}>
+    <div className="callout-card" style={styles.card}>
       <Panel title="Top 3 performers"  accent={GREEN} journeys={top3}    />
-      <div style={styles.divider} />
+      <div className="callout-divider" style={styles.divider} />
       <Panel title="Needs attention"   accent={RED}   journeys={bottom3} />
     </div>
   );

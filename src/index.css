@@ -27,3 +27,115 @@ body {
 ::-webkit-scrollbar-track { background: #161b22; }
 ::-webkit-scrollbar-thumb { background: #30363d; border-radius: 3px; }
 ::-webkit-scrollbar-thumb:hover { background: #484f58; }
+
+/* ── Table scroll hint: hidden on desktop, shown on mobile ── */
+.table-scroll-hint {
+  display: none;
+}
+
+/* ─────────────────────────────────────────────────────────────────
+   MOBILE RESPONSIVE  (< 768px)
+   All desktop layout is defined by inline styles — these rules
+   only activate on small screens.
+───────────────────────────────────────────────────────────────── */
+@media (max-width: 768px) {
+
+  /* ── Page body padding ── */
+  .page-body {
+    padding: 16px 12px 40px !important;
+  }
+
+  /* ── Masthead: reflow to 3 rows ──────────────────────────────── */
+  .masthead-inner {
+    flex-wrap: wrap !important;
+    height: auto !important;
+    padding: 10px 14px !important;
+    gap: 0 !important;
+    align-items: center !important;
+  }
+
+  /*
+   * Flatten .masthead-brand and .masthead-right into masthead-inner
+   * using display:contents so their children become direct flex items
+   * that can be individually ordered.
+   */
+  .masthead-brand,
+  .masthead-right {
+    display: contents !important;
+  }
+
+  /* Row 1 — left: wordmark */
+  .masthead-wordmark {
+    order: 1;
+    flex-shrink: 0;
+    gap: 4px !important;
+  }
+  .masthead-wordmark span:first-child { font-size: 13px !important; }
+  .masthead-wordmark span:last-child  { font-size: 11px !important; }
+
+  /* Hide vertical divider on mobile */
+  .masthead-divider-bar {
+    display: none !important;
+  }
+
+  /* Row 1 — right: LIVE pill pushed to far right */
+  .mhd-live-pill {
+    order: 2;
+    margin-left: auto;
+  }
+
+  /* Row 2 — subtitle block, full width */
+  .masthead-titles {
+    order: 3;
+    flex: 0 0 100%;
+    margin-top: 5px;
+  }
+  .masthead-titles p:first-child { font-size: 12px !important; }
+  .masthead-titles p:last-child  { font-size: 10px !important; }
+
+  /* Row 3 — timestamp, full width, green values already inline */
+  .mhd-week-label {
+    order: 4;
+    flex: 0 0 100% !important;
+    text-align: left !important;
+    font-size: 10px !important;
+    margin-top: 4px !important;
+    padding-bottom: 8px !important;
+  }
+
+  /* ── KPI strip: 2-column grid, Total Sends full width ────────── */
+  .kpi-grid {
+    grid-template-columns: 1fr 1fr !important;
+  }
+  .kpi-total-sends {
+    grid-column: 1 / -1 !important;
+  }
+
+  /* ── Top 3 / Needs Attention: stack panels vertically ────────── */
+  .callout-card {
+    grid-template-columns: 1fr !important;
+  }
+  .callout-divider {
+    height: 1px !important;
+    width: 100% !important;
+    align-self: auto !important;
+  }
+
+  /* ── Journey table: touch scrolling + scroll hint ────────────── */
+  .table-scroll-wrapper {
+    -webkit-overflow-scrolling: touch;
+    max-height: none !important;
+  }
+  .table-scroll-hint {
+    display: block;
+    font-size: 10px;
+    color: #4b5563;
+    text-align: center;
+    padding: 0 0 8px;
+    letter-spacing: 0.04em;
+  }
+
+  /* ── Filter toggle: slightly smaller on mobile ───────────────── */
+  .masthead-right { /* already handled via display:contents above */ }
+
+}

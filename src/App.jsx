@@ -71,24 +71,25 @@ export default function App() {
     <div style={styles.root}>
       {/* ── Masthead ── */}
       <header style={styles.masthead}>
-        <div style={styles.mastheadInner}>
-          <div style={styles.mastheadLeft}>
-            <div style={styles.wordmark}>
+        <div className="masthead-inner" style={styles.mastheadInner}>
+          {/* On mobile: display:contents flattens children into masthead-inner flex */}
+          <div className="masthead-brand" style={styles.mastheadLeft}>
+            <div className="masthead-wordmark" style={styles.wordmark}>
               <span style={styles.wordmarkAccent}>XCL</span>
               <span style={styles.wordmarkMain}>World Academy</span>
             </div>
-            <div style={styles.mastheadDivider} />
-            <div>
+            <div className="masthead-divider-bar" style={styles.mastheadDivider} />
+            <div className="masthead-titles">
               <p style={styles.mastheadTitle}>Journey Performance Dashboard</p>
               <p style={styles.mastheadSub}>Salesforce Marketing Cloud · Singapore BU</p>
             </div>
           </div>
-          <div style={styles.mastheadRight}>
-            <div style={styles.livePill}>
+          <div className="masthead-right" style={styles.mastheadRight}>
+            <div className="mhd-live-pill" style={styles.livePill}>
               <span style={styles.liveGlow} />
               <span style={styles.livePillText}>LIVE</span>
             </div>
-            <div style={styles.weekLabel}>
+            <div className="mhd-week-label" style={styles.weekLabel}>
               {weekDate ? (
                 <>
                   Last updated:&nbsp;
@@ -105,7 +106,7 @@ export default function App() {
       </header>
 
       {/* ── Page body ── */}
-      <main style={styles.body}>
+      <main className="page-body" style={styles.body}>
 
         {/* ── Loading state ── */}
         {loading && (
@@ -155,6 +156,7 @@ export default function App() {
                 </div>
                 <FilterToggle value={statusFilter} onChange={setStatusFilter} />
               </div>
+              <p className="table-scroll-hint">← Scroll table horizontally →</p>
               <JourneyTable journeys={filteredJourneys} />
             </section>
 

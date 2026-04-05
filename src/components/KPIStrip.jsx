@@ -49,9 +49,13 @@ export default function KPIStrip({ kpis }) {
   const cards = buildCards(kpis);
 
   return (
-    <div style={styles.grid}>
+    <div className="kpi-grid" style={styles.grid}>
       {cards.map((c) => (
-        <div key={c.label} style={styles.card}>
+        <div
+          key={c.label}
+          className={`kpi-card${c.label === 'Total Sends' ? ' kpi-total-sends' : ''}`}
+          style={styles.card}
+        >
           <div style={styles.cardTop}>
             <p style={styles.label}>{c.label}</p>
             {c.delta && (
