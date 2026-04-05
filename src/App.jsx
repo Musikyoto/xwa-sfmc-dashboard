@@ -11,10 +11,17 @@ import {
   getCTORColor,
 } from './data/journeyData';
 
+const STATUS_FILTERS = [
+  { key: 'running', label: 'Running' },
+  { key: 'stopped', label: 'Stopped' },
+  { key: 'all',     label: 'All'     },
+];
+
 export default function App() {
-  const [journeys, setJourneys] = useState([]);
-  const [loading, setLoading]   = useState(true);
-  const [error, setError]       = useState(null);
+  const [journeys, setJourneys]           = useState([]);
+  const [loading, setLoading]             = useState(true);
+  const [error, setError]                 = useState(null);
+  const [statusFilter, setStatusFilter]   = useState('running');
 
   useEffect(() => {
     fetchJourneys()
@@ -27,12 +34,18 @@ export default function App() {
     [journeys],
   );
 
+  const filteredJourneys = useMemo(() => {
+    if (statusFilter === 'all') return journeys;
+    return journeys.filter(
+      (j) => j.status.trim().toLowerCase() === statusFilter,
+    );
+  }, [journeys, statusFilter]);
+
   const chartData = useMemo(
     () => journeys.map((j) => ({ name: j.name, openRate: j.openRate, ctr: j.ctr, ctor: j.ctor })),
     [journeys],
   );
 
-  // Derive the week label from the first journey row, or fall back to today.
   const weekLabel = journeys[0]?.week ?? new Date().toLocaleDateString('en-GB');
 
   return (
@@ -98,11 +111,21 @@ export default function App() {
           <>
             <KPIStrip kpis={kpis} />
 
-            <TopBottomCallout journeys={journeys} />
+            <TopBottomCallout journeys={filteredJourneys} />
 
             <section style={styles.section}>
-              <SectionLabel>Journey Performance</SectionLabel>
-              <JourneyTable journeys={journeys} />
+              {/* Section header row: label + count badge + filter toggle */}
+              <div style={styles.sectionHeader}>
+                <div style={styles.sectionLabelGroup}>
+                  <span style={sectionLabelBar} />
+                  <span style={styles.sectionLabelText}>Journey Performance</span>
+                  <span style={styles.countBadge}>
+                    {filteredJourneys.length} {filteredJourneys.length === 1 ? 'journey' : 'journeys'}
+                  </span>
+                </div>
+                <FilterToggle value={statusFilter} onChange={setStatusFilter} />
+              </div>
+              <JourneyTable journeys={filteredJourneys} />
             </section>
 
             <section style={styles.section}>
@@ -164,6 +187,72 @@ export default function App() {
   );
 }
 
+/* ── Filter toggle component ── */
+function FilterToggle({ value, onChange }) {
+  return (
+    <div style={ftStyles.group}>
+      {STATUS_FILTERS.map(({ key, label }, i) => {
+        const active = value === key;
+        return (
+          <button
+            key={key}
+            onClick={() => onChange(key)}
+            style={{
+              ...ftStyles.btn,
+              ...(i > 0 ? ftStyles.btnBorder : {}),
+              ...(active ? ftStyles.active[key] : ftStyles.inactive),
+            }}
+          >
+            {label}
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
+const ftStyles = {
+  group: {
+    display: 'flex',
+    border: '1px solid #30363d',
+    borderRadius: '6px',
+    overflow: 'hidden',
+  },
+  btn: {
+    padding: '4px 12px',
+    fontSize: '11px',
+    fontWeight: 600,
+    letterSpacing: '0.04em',
+    border: 'none',
+    cursor: 'pointer',
+    fontFamily: 'inherit',
+    transition: 'background 0.15s, color 0.15s',
+    lineHeight: 1.4,
+  },
+  btnBorder: {
+    borderLeft: '1px solid #30363d',
+  },
+  inactive: {
+    background: '#0d1117',
+    color: '#4b5563',
+  },
+  active: {
+    running: {
+      background: 'rgba(63,185,80,0.12)',
+      color: '#3fb950',
+    },
+    stopped: {
+      background: 'rgba(100,100,110,0.18)',
+      color: '#9ca3af',
+    },
+    all: {
+      background: '#21262d',
+      color: '#e6edf3',
+    },
+  },
+};
+
+/* ── Generic section label (used by chart sections) ── */
 function SectionLabel({ children }) {
   return (
     <div style={sectionLabelStyle}>
@@ -300,6 +389,36 @@ const styles = {
   },
   section: {
     marginBottom: '36px',
+  },
+
+  /* ── Journey Performance section header ── */
+  sectionHeader: {
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: '12px',
+  },
+  sectionLabelGroup: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '10px',
+  },
+  sectionLabelText: {
+    fontSize: '10px',
+    fontWeight: 700,
+    letterSpacing: '0.12em',
+    textTransform: 'uppercase',
+    color: '#4b5563',
+  },
+  countBadge: {
+    fontSize: '10px',
+    fontWeight: 600,
+    color: '#6b7280',
+    background: '#161b22',
+    border: '1px solid #21262d',
+    borderRadius: '99px',
+    padding: '1px 8px',
+    fontVariantNumeric: 'tabular-nums',
   },
 
   /* ── Loading / Error states ── */

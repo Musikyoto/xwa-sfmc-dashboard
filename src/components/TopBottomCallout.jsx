@@ -31,15 +31,11 @@ function Panel({ title, accent, journeys }) {
 }
 
 export default function TopBottomCallout({ journeys }) {
-  const running = journeys.filter(
-    (j) => j.status.trim().toLowerCase() === 'running',
-  );
-
-  const byOpenRate = [...running].sort((a, b) => b.openRate - a.openRate);
+  const byOpenRate = [...journeys].sort((a, b) => b.openRate - a.openRate);
   const top3    = byOpenRate.slice(0, 3);
   const bottom3 = byOpenRate.slice(-3).reverse();
 
-  if (running.length < 1) return null;
+  if (journeys.length < 1) return null;
 
   return (
     <div style={styles.card}>
