@@ -11,6 +11,11 @@ import {
   getCTORColor,
 } from './data/journeyData';
 
+function fmtShort(d) {
+  if (!d) return '';
+  return d.toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short' });
+}
+
 const STATUS_FILTERS = [
   { key: 'running', label: 'Running' },
   { key: 'stopped', label: 'Stopped' },
@@ -46,7 +51,21 @@ export default function App() {
     [journeys],
   );
 
-  const weekLabel = journeys[0]?.week ?? new Date().toLocaleDateString('en-GB');
+  // Parse the most recent WeekEnding value, avoiding UTC midnight timezone shift
+  const weekDate = useMemo(() => {
+    const raw = journeys.length
+      ? [...journeys].sort((a, b) => (b.week ?? '').localeCompare(a.week ?? ''))[0]?.week
+      : null;
+    if (!raw) return null;
+    const iso = raw.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+    if (iso) return new Date(Number(iso[1]), Number(iso[2]) - 1, Number(iso[3]));
+    const d = new Date(raw);
+    return isNaN(d.getTime()) ? null : d;
+  }, [journeys]);
+
+  const nextRefreshDate = weekDate
+    ? new Date(weekDate.getFullYear(), weekDate.getMonth(), weekDate.getDate() + 7)
+    : null;
 
   return (
     <div style={styles.root}>
@@ -69,7 +88,18 @@ export default function App() {
               <span style={styles.liveGlow} />
               <span style={styles.livePillText}>LIVE</span>
             </div>
-            <div style={styles.weekLabel}>{weekLabel}</div>
+            <div style={styles.weekLabel}>
+              {weekDate ? (
+                <>
+                  Last updated:&nbsp;
+                  <span style={styles.weekDateValue}>{fmtShort(weekDate)}</span>
+                  &nbsp;·&nbsp;Next refresh:&nbsp;
+                  <span style={styles.weekDateValue}>{fmtShort(nextRefreshDate)}</span>
+                </>
+              ) : (
+                'Loading…'
+              )}
+            </div>
           </div>
         </div>
       </header>
@@ -375,10 +405,15 @@ const styles = {
     letterSpacing: '0.1em',
   },
   weekLabel: {
-    fontSize: '12px',
+    fontSize: '11px',
     fontWeight: 500,
     color: '#4b5563',
     fontVariantNumeric: 'tabular-nums',
+    textAlign: 'right',
+  },
+  weekDateValue: {
+    color: '#3fb950',
+    fontWeight: 600,
   },
 
   /* ── Body ── */
