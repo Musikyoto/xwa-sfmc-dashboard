@@ -168,9 +168,9 @@ export default function App() {
                 benchmarkValue={BENCHMARKS.openRate}
                 benchmarkPill={`Benchmark: ${BENCHMARKS.openRate}%`}
                 legendItems={[
-                  { color: '#16a34a', label: `Above ${BENCHMARKS.openRate}%` },
-                  { color: '#d97706', label: 'Within 5% of benchmark' },
-                  { color: '#dc2626', label: `Below ${BENCHMARKS.openRate}%` },
+                  { color: '#16a34a', label: 'Above 23.4%'           },
+                  { color: '#d97706', label: 'Between 18.7–23.3%'    },
+                  { color: '#dc2626', label: 'Below 18.7%'            },
                 ]}
                 colorFn={(v) => getRateColor(v, BENCHMARKS.openRate)}
               />
