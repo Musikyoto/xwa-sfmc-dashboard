@@ -1,20 +1,25 @@
 import { useState } from 'react';
 import { BENCHMARKS } from '../data/journeyData';
 
-// ── RAG colour constants (spec-exact values) ─────────────────────────────
+// ── RAG colour constants ──────────────────────────────────────────────────
 const RAG = { G: '#3fb950', A: '#d29922', R: '#f85149' };
 
+// Exact per-metric thresholds (not benchmark × 0.8)
 function ragColor(key, val) {
-  const b = { openRate: BENCHMARKS.openRate, ctr: BENCHMARKS.ctr, ctor: BENCHMARKS.ctorLow }[key];
-  if (val >= b)       return RAG.G;
-  if (val >= b * 0.8) return RAG.A;
-  return RAG.R;
-}
-
-function rowRAG(j) {
-  const colors = ['openRate', 'ctr', 'ctor'].map((k) => ragColor(k, j[k]));
-  if (colors.includes(RAG.R)) return RAG.R;
-  if (colors.includes(RAG.A)) return RAG.A;
+  if (key === 'openRate') {
+    if (val >= 23.4) return RAG.G;
+    if (val >= 18.7) return RAG.A;
+    return RAG.R;
+  }
+  if (key === 'ctr') {
+    if (val >= 3.0) return RAG.G;
+    if (val >= 2.4) return RAG.A;
+    return RAG.R;
+  }
+  if (key === 'ctor') {
+    if (val >= 16 && val <= 30) return val >= 20 ? RAG.G : RAG.A;
+    return RAG.R; // < 16 or > 30
+  }
   return RAG.G;
 }
 
@@ -22,7 +27,6 @@ function rowRAG(j) {
 const COLS = [
   { key: 'name',     label: 'Journey Name', align: 'left',   minW: 190, sortable: true  },
   { key: 'status',   label: 'Status',       align: 'center', minW: 80,  sortable: true  },
-  { key: 'rag',      label: 'RAG',          align: 'center', minW: 44,  sortable: false },
   { key: 'sends',    label: 'Sends',        align: 'right',  minW: 80,  sortable: true  },
   { key: 'opens',    label: 'Opens',        align: 'right',  minW: 70,  sortable: true  },
   { key: 'openRate', label: 'Open %',       align: 'right',  minW: 70,  sortable: true  },
@@ -74,9 +78,9 @@ export default function JourneyTable({ journeys }) {
       {/* ── Legend ── */}
       <div style={styles.legend}>
         {[
-          { color: RAG.G, label: 'Meets benchmark'      },
-          { color: RAG.A, label: 'Within 20% below'     },
-          { color: RAG.R, label: 'More than 20% below'  },
+          { color: RAG.G, label: 'Meets benchmark'          },
+          { color: RAG.A, label: 'Slightly below benchmark' },
+          { color: RAG.R, label: 'Way below benchmark'      },
         ].map(({ color, label }) => (
           <span key={label} style={styles.legendItem}>
             <span style={{ ...styles.legendDot, background: color }} />
@@ -112,7 +116,6 @@ export default function JourneyTable({ journeys }) {
           </thead>
           <tbody>
             {sorted.map((j, i) => {
-              const rag = rowRAG(j);
               return (
                 <tr
                   key={j.id}
@@ -125,7 +128,6 @@ export default function JourneyTable({ journeys }) {
                     const val = j[col.key];
                     const isMetric = METRIC_COLS.has(col.key);
                     const isStatus = col.key === 'status';
-                    const isRAG    = col.key === 'rag';
                     const s = isStatus ? (STATUS_STYLES[val] || STATUS_STYLES.Default) : null;
                     const metricCol = isMetric ? ragColor(col.key, val) : null;
 
@@ -140,16 +142,7 @@ export default function JourneyTable({ journeys }) {
                           fontVariantNumeric: typeof val === 'number' || isMetric ? 'tabular-nums' : undefined,
                         }}
                       >
-                        {isRAG ? (
-                          <span style={{
-                            display: 'inline-block',
-                            width: '9px',
-                            height: '9px',
-                            borderRadius: '50%',
-                            background: rag,
-                            boxShadow: `0 0 4px ${rag}66`,
-                          }} />
-                        ) : isStatus ? (
+                        {isStatus ? (
                           <span style={{
                             display: 'inline-flex',
                             alignItems: 'center',
