@@ -17,8 +17,9 @@ function ragColor(key, val) {
     return RAG.R;
   }
   if (key === 'ctor') {
-    if (val >= 16 && val <= 30) return val >= 20 ? RAG.G : RAG.A;
-    return RAG.R; // < 16 or > 30
+    if (val >= 20)  return RAG.G;
+    if (val >= 10)  return RAG.A;
+    return RAG.R;
   }
   return RAG.G;
 }
