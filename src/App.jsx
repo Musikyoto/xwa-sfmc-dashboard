@@ -184,9 +184,9 @@ export default function App() {
                 benchmarkValue={BENCHMARKS.ctr}
                 benchmarkPill={`Benchmark: ${BENCHMARKS.ctr}%`}
                 legendItems={[
-                  { color: '#16a34a', label: `Above ${BENCHMARKS.ctr}%` },
-                  { color: '#d97706', label: 'Within 2% of benchmark' },
-                  { color: '#dc2626', label: `Below ${BENCHMARKS.ctr}%` },
+                  { color: '#16a34a', label: 'Above 3.0%'        },
+                  { color: '#d97706', label: 'Between 2.4–2.9%'  },
+                  { color: '#dc2626', label: 'Below 2.4%'         },
                 ]}
                 colorFn={(v) => getRateColor(v, BENCHMARKS.ctr)}
               />
