@@ -201,7 +201,7 @@ export default function App() {
                 benchmarkPill={`Benchmark: ${BENCHMARKS.ctorLow}–${BENCHMARKS.ctorHigh}%`}
                 legendItems={[
                   { color: '#16a34a', label: 'Above 20%' },
-                  { color: '#d97706', label: '10–20% (approaching)' },
+                  { color: '#d97706', label: 'Between 10–20%' },
                   { color: '#dc2626', label: 'Below 10%' },
                 ]}
                 colorFn={getCTORColor}
