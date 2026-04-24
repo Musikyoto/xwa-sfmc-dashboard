@@ -70,8 +70,11 @@ function parseCSV(text) {
         CTOR,
         Unsubscribes,
         UnsubRate,
+        TourScheduled,
+        TourAttended,
+        TourConversionRate,
         WeekEnding,
-        // BU — not needed in the UI, intentionally omitted
+        // BU (index 14) — not needed in the UI, intentionally omitted
       ] = parseRow(line).map((f) => f.trim()); // trim every field
 
       return {
@@ -87,6 +90,9 @@ function parseCSV(text) {
         ctor: Number(CTOR),           // pre-calculated in sheet
         unsubs: Number(Unsubscribes),
         unsubRate: Number(UnsubRate), // pre-calculated in sheet
+        tourScheduled: Number(TourScheduled),
+        tourAttended: Number(TourAttended),
+        tourConversionRate: Number(TourConversionRate), // pre-calculated in sheet
         week: WeekEnding,
       };
     });

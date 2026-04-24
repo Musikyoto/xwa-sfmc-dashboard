@@ -26,16 +26,18 @@ function ragColor(key, val) {
 
 // ── Table column definitions ──────────────────────────────────────────────
 const COLS = [
-  { key: 'name',     label: 'Journey Name', align: 'left',   minW: 190, sortable: true  },
-  { key: 'status',   label: 'Status',       align: 'center', minW: 80,  sortable: true  },
-  { key: 'sends',    label: 'Sends',        align: 'right',  minW: 80,  sortable: true  },
-  { key: 'opens',    label: 'Opens',        align: 'right',  minW: 70,  sortable: true  },
-  { key: 'openRate', label: 'Open %',       align: 'right',  minW: 70,  sortable: true  },
-  { key: 'clicks',   label: 'Clicks',       align: 'right',  minW: 70,  sortable: true  },
-  { key: 'ctr',      label: 'CTR',          align: 'right',  minW: 70,  sortable: true  },
-  { key: 'ctor',     label: 'CTOR',         align: 'right',  minW: 70,  sortable: true  },
-  { key: 'unsubs',   label: 'Unsubs',       align: 'right',  minW: 65,  sortable: true  },
-  { key: 'week',     label: 'Week',         align: 'center', minW: 80,  sortable: true  },
+  { key: 'name',               label: 'Journey Name', align: 'left',  minW: 190, sortable: true },
+  { key: 'status',             label: 'Status',       align: 'center', minW: 80, sortable: true },
+  { key: 'sends',              label: 'Sends',        align: 'right',  minW: 80, sortable: true },
+  { key: 'opens',              label: 'Opens',        align: 'right',  minW: 70, sortable: true },
+  { key: 'openRate',           label: 'Open %',       align: 'right',  minW: 70, sortable: true },
+  { key: 'clicks',             label: 'Clicks',       align: 'right',  minW: 70, sortable: true },
+  { key: 'ctr',                label: 'CTR',          align: 'right',  minW: 70, sortable: true },
+  { key: 'ctor',               label: 'CTOR',         align: 'right',  minW: 70, sortable: true },
+  { key: 'unsubs',             label: 'Unsubs',       align: 'right',  minW: 65, sortable: true },
+  { key: 'tourScheduled',      label: 'Tour Sched',   align: 'right',  minW: 90, sortable: true },
+  { key: 'tourAttended',       label: 'Tour Attd',    align: 'right',  minW: 90, sortable: true },
+  { key: 'tourConversionRate', label: 'Tour Conv %',  align: 'right',  minW: 100, sortable: true },
 ];
 
 const METRIC_COLS = new Set(['openRate', 'ctr', 'ctor']);
@@ -44,6 +46,7 @@ function fmt(key, val) {
   if (key === 'openRate') return `${val.toFixed(1)}%`;
   if (key === 'ctr')      return `${val.toFixed(2)}%`;
   if (key === 'ctor')     return `${val.toFixed(1)}%`;
+  if (key === 'tourConversionRate') return `${val.toFixed(1)}%`;
   if (typeof val === 'number') return val.toLocaleString();
   return val;
 }
@@ -95,40 +98,46 @@ export default function JourneyTable({ journeys }) {
         <table style={styles.table}>
           <thead>
             <tr>
-              {COLS.map((col) => (
-                <th
-                  key={col.key}
-                  style={{
-                    ...styles.th,
-                    textAlign: col.align,
-                    minWidth: col.minW,
-                    cursor: col.sortable ? 'pointer' : 'default',
-                    color: sortKey === col.key ? '#93c5fd' : '#4b5563',
-                  }}
-                  onClick={() => col.sortable && handleSort(col.key)}
-                >
-                  <span style={styles.thInner}>
-                    {col.label}
-                    {col.sortable && <SortIcon active={sortKey === col.key} dir={sortDir} />}
-                  </span>
-                </th>
-              ))}
+              {COLS.map((col) => {
+                const isName = col.key === 'name';
+                return (
+                  <th
+                    key={col.key}
+                    style={{
+                      ...styles.th,
+                      ...(isName ? styles.thNameSticky : null),
+                      textAlign: col.align,
+                      minWidth: col.minW,
+                      cursor: col.sortable ? 'pointer' : 'default',
+                      color: sortKey === col.key ? '#93c5fd' : '#4b5563',
+                    }}
+                    onClick={() => col.sortable && handleSort(col.key)}
+                  >
+                    <span style={styles.thInner}>
+                      {col.label}
+                      {col.sortable && <SortIcon active={sortKey === col.key} dir={sortDir} />}
+                    </span>
+                  </th>
+                );
+              })}
             </tr>
           </thead>
           <tbody>
             {sorted.map((j, i) => {
+              const rowBg = i % 2 === 0 ? '#161b22' : '#1a1f26';
               return (
                 <tr
                   key={j.id}
                   style={{
                     ...styles.tr,
-                    background: i % 2 === 0 ? 'transparent' : 'rgba(255,255,255,0.015)',
+                    background: rowBg,
                   }}
                 >
                   {COLS.map((col) => {
                     const val = j[col.key];
                     const isMetric = METRIC_COLS.has(col.key);
                     const isStatus = col.key === 'status';
+                    const isName = col.key === 'name';
                     const s = isStatus ? (STATUS_STYLES[val] || STATUS_STYLES.Default) : null;
                     const metricCol = isMetric ? ragColor(col.key, val) : null;
 
@@ -137,6 +146,7 @@ export default function JourneyTable({ journeys }) {
                         key={col.key}
                         style={{
                           ...styles.td,
+                          ...(isName ? { ...styles.tdNameSticky, background: rowBg } : null),
                           textAlign: col.align,
                           color: metricCol || '#e6edf3',
                           fontWeight: col.key === 'name' ? 500 : isMetric ? 600 : 400,
@@ -238,7 +248,9 @@ const styles = {
   },
   table: {
     width: '100%',
-    borderCollapse: 'collapse',
+    minWidth: '1100px',
+    borderCollapse: 'separate',
+    borderSpacing: 0,
     fontSize: '13px',
   },
   th: {
@@ -255,6 +267,11 @@ const styles = {
     top: 0,
     zIndex: 10,
   },
+  thNameSticky: {
+    left: 0,
+    zIndex: 20,
+    borderRight: '1px solid #21262d',
+  },
   thInner: {
     display: 'inline-flex',
     alignItems: 'center',
@@ -268,6 +285,12 @@ const styles = {
     whiteSpace: 'nowrap',
     fontSize: '13px',
     lineHeight: 1.4,
+  },
+  tdNameSticky: {
+    position: 'sticky',
+    left: 0,
+    zIndex: 5,
+    borderRight: '1px solid #21262d',
   },
   tableFooter: {
     display: 'flex',
