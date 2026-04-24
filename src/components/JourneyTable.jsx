@@ -46,7 +46,7 @@ function fmt(key, val) {
   if (key === 'openRate') return `${val.toFixed(1)}%`;
   if (key === 'ctr')      return `${val.toFixed(2)}%`;
   if (key === 'ctor')     return `${val.toFixed(1)}%`;
-  if (key === 'tourConversionRate') return `${val.toFixed(1)}%`;
+  if (key === 'tourConversionRate') return `${val.toFixed(2)}%`;
   if (typeof val === 'number') return val.toLocaleString();
   return val;
 }
