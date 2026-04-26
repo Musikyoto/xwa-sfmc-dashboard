@@ -5,6 +5,10 @@ function delta(value, benchmark) {
   return { sign: d >= 0 ? '+' : '', value: d.toFixed(1) };
 }
 
+// Neutral accent for absolute-count cards (no benchmark comparison).
+const NEUTRAL_ACCENT = '#2C2C2A';
+const NEUTRAL_VALUE_COLOR = '#e6edf3';
+
 function buildCards(kpis) {
   return [
     {
@@ -35,11 +39,37 @@ function buildCards(kpis) {
       accent: getCTORColor(kpis.avgCTOR),
       delta: delta(kpis.avgCTOR, BENCHMARKS.ctorLow),
     },
+    // ── Second row: absolute counts, no benchmark, neutral styling ─────
     {
-      label: 'Active Journeys',
-      value: kpis.activeJourneys,
-      sub: 'Singapore BU',
-      accent: '#3b82f6',
+      label: 'Total Opens',
+      value: kpis.totalOpens.toLocaleString(),
+      sub: 'Unique opens',
+      accent: NEUTRAL_ACCENT,
+      valueColor: NEUTRAL_VALUE_COLOR,
+      delta: null,
+    },
+    {
+      label: 'Total Clicks',
+      value: kpis.totalClicks.toLocaleString(),
+      sub: 'Unique clicks',
+      accent: NEUTRAL_ACCENT,
+      valueColor: NEUTRAL_VALUE_COLOR,
+      delta: null,
+    },
+    {
+      label: 'Tour Scheduled',
+      value: kpis.totalTourScheduled.toLocaleString(),
+      sub: 'All journeys',
+      accent: NEUTRAL_ACCENT,
+      valueColor: NEUTRAL_VALUE_COLOR,
+      delta: null,
+    },
+    {
+      label: 'Tour Attended',
+      value: kpis.totalTourAttended.toLocaleString(),
+      sub: 'All journeys',
+      accent: NEUTRAL_ACCENT,
+      valueColor: NEUTRAL_VALUE_COLOR,
       delta: null,
     },
   ];
@@ -53,7 +83,7 @@ export default function KPIStrip({ kpis }) {
       {cards.map((c) => (
         <div
           key={c.label}
-          className={`kpi-card${c.label === 'Total Sends' ? ' kpi-total-sends' : ''}`}
+          className="kpi-card"
           style={styles.card}
         >
           <div style={styles.cardTop}>
@@ -71,7 +101,7 @@ export default function KPIStrip({ kpis }) {
               </span>
             )}
           </div>
-          <p style={{ ...styles.value, color: c.accent }}>{c.value}</p>
+          <p style={{ ...styles.value, color: c.valueColor || c.accent }}>{c.value}</p>
           <p style={styles.sub}>{c.sub}</p>
           <div style={{ ...styles.accentBar, background: c.accent }} />
         </div>
@@ -90,7 +120,7 @@ function hexAlpha(hex, alpha) {
 const styles = {
   grid: {
     display: 'grid',
-    gridTemplateColumns: 'repeat(auto-fit, minmax(170px, 1fr))',
+    gridTemplateColumns: 'repeat(4, minmax(0, 1fr))',
     gap: '12px',
     marginBottom: '36px',
   },

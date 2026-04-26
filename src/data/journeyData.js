@@ -112,10 +112,14 @@ export function computeKPIs(journeys) {
   // "Running" is the live status value from SFMC exported via Google Sheets.
   const running = journeys.filter((j) => j.status.trim().toLowerCase() === 'running');
   return {
-    totalSends:     journeys.reduce((s, j) => s + j.sends, 0),
-    avgOpenRate:    journeys.reduce((s, j) => s + j.openRate, 0) / n,
-    avgCTR:         journeys.reduce((s, j) => s + j.ctr, 0) / n,
-    avgCTOR:        journeys.reduce((s, j) => s + j.ctor, 0) / n,
-    activeJourneys: running.length,
+    totalSends:         journeys.reduce((s, j) => s + j.sends, 0),
+    totalOpens:         journeys.reduce((s, j) => s + j.opens, 0),
+    totalClicks:        journeys.reduce((s, j) => s + j.clicks, 0),
+    totalTourScheduled: journeys.reduce((s, j) => s + (j.tourScheduled || 0), 0),
+    totalTourAttended:  journeys.reduce((s, j) => s + (j.tourAttended  || 0), 0),
+    avgOpenRate:        journeys.reduce((s, j) => s + j.openRate, 0) / n,
+    avgCTR:             journeys.reduce((s, j) => s + j.ctr, 0) / n,
+    avgCTOR:            journeys.reduce((s, j) => s + j.ctor, 0) / n,
+    activeJourneys:     running.length,
   };
 }
