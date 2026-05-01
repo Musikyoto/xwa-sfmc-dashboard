@@ -142,7 +142,7 @@ export default function App() {
           <>
             <KPIStrip kpis={kpis} />
 
-            <TopBottomCallout journeys={filteredJourneys} />
+            <TopBottomCallout journeys={journeys} />
 
             <section style={styles.section}>
               {/* Section header row: label + count badge + filter toggle */}

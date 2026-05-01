@@ -1,28 +1,36 @@
 const GREEN = '#3fb950';
 const RED   = '#f85149';
 
-function Panel({ title, accent, journeys }) {
+function isRunning(j) {
+  return j.status?.trim().toLowerCase() === 'running';
+}
+
+function Panel({ title, subtitle, accent, journeys, formatRate, helperFor }) {
   return (
     <div style={{ ...styles.panel, borderLeft: `3px solid ${accent}` }}>
       <p style={{ ...styles.panelTitle, color: accent }}>{title}</p>
+      <p style={styles.subtitle}>{subtitle}</p>
       <div style={styles.list}>
         {journeys.map((j, i) => (
           <div key={j.id} style={styles.entry}>
-            <span style={{ ...styles.rank, color: accent }}>{i + 1}</span>
-            <span
-              style={{
-                width: '7px',
-                height: '7px',
-                borderRadius: '50%',
-                background: accent,
-                boxShadow: `0 0 5px ${accent}88`,
-                flexShrink: 0,
-              }}
-            />
-            <span style={styles.name}>{j.name}</span>
-            <span style={{ ...styles.rate, color: accent }}>
-              {j.openRate.toFixed(1)}%
-            </span>
+            <div style={styles.entryRow}>
+              <span style={{ ...styles.rank, color: accent }}>{i + 1}</span>
+              <span
+                style={{
+                  width: '7px',
+                  height: '7px',
+                  borderRadius: '50%',
+                  background: accent,
+                  boxShadow: `0 0 5px ${accent}88`,
+                  flexShrink: 0,
+                }}
+              />
+              <span style={styles.name}>{j.name}</span>
+              <span style={{ ...styles.rate, color: accent }}>
+                {formatRate(j)}
+              </span>
+            </div>
+            <p style={styles.helper}>{helperFor(j)}</p>
           </div>
         ))}
       </div>
@@ -31,17 +39,55 @@ function Panel({ title, accent, journeys }) {
 }
 
 export default function TopBottomCallout({ journeys }) {
-  const byOpenRate = [...journeys].sort((a, b) => b.openRate - a.openRate);
-  const top3    = byOpenRate.slice(0, 3);
-  const bottom3 = byOpenRate.slice(-3).reverse();
+  if (!journeys || journeys.length < 1) return null;
 
-  if (journeys.length < 1) return null;
+  const running = journeys.filter(isRunning);
+
+  // ── Top 3: Running, ≥250 sends, by tour conversion rate desc ────────
+  const top3 = running
+    .filter((j) => j.sends >= 250)
+    .sort((a, b) => {
+      if (b.tourConversionRate !== a.tourConversionRate) {
+        return b.tourConversionRate - a.tourConversionRate;
+      }
+      if (b.sends !== a.sends) return b.sends - a.sends;
+      return a.name.localeCompare(b.name);
+    })
+    .slice(0, 3);
+
+  // ── Needs Attention: Running, ≥1000 sends, by CTOR asc ──────────────
+  const bottom3 = running
+    .filter((j) => j.sends >= 1000)
+    .sort((a, b) => {
+      if (a.ctor !== b.ctor) return a.ctor - b.ctor;
+      if (b.sends !== a.sends) return b.sends - a.sends;
+      return a.name.localeCompare(b.name);
+    })
+    .slice(0, 3);
 
   return (
     <div className="callout-card" style={styles.card}>
-      <Panel title="Top 3 performers"  accent={GREEN} journeys={top3}    />
+      <Panel
+        title="Top 3 performers"
+        subtitle="By tour conversion rate · min 250 sends"
+        accent={GREEN}
+        journeys={top3}
+        formatRate={(j) => `${j.tourConversionRate.toFixed(2)}%`}
+        helperFor={(j) =>
+          `${j.tourScheduled.toLocaleString()} tours from ${j.sends.toLocaleString()} sends`
+        }
+      />
       <div className="callout-divider" style={styles.divider} />
-      <Panel title="Needs attention"   accent={RED}   journeys={bottom3} />
+      <Panel
+        title="Needs attention"
+        subtitle="By click-to-open rate · min 1000 sends"
+        accent={RED}
+        journeys={bottom3}
+        formatRate={(j) => `${j.ctor.toFixed(1)}%`}
+        helperFor={(j) =>
+          `${j.clicks.toLocaleString()} clicks from ${j.opens.toLocaleString()} opens`
+        }
+      />
     </div>
   );
 }
@@ -68,14 +114,25 @@ const styles = {
     fontWeight: 700,
     textTransform: 'uppercase',
     letterSpacing: '0.1em',
+    marginBottom: '4px',
+  },
+  subtitle: {
+    fontSize: '10px',
+    color: '#6b7280',
+    fontWeight: 500,
     marginBottom: '14px',
   },
   list: {
     display: 'flex',
     flexDirection: 'column',
-    gap: '10px',
+    gap: '12px',
   },
   entry: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '2px',
+  },
+  entryRow: {
     display: 'flex',
     alignItems: 'center',
     gap: '10px',
@@ -102,5 +159,14 @@ const styles = {
     fontWeight: 700,
     fontVariantNumeric: 'tabular-nums',
     flexShrink: 0,
+  },
+  // Helper text indented to align with the journey name (past rank + dot + gaps).
+  // rank width 12 + gap 10 + dot 7 + gap 10 = 39px.
+  helper: {
+    fontSize: '10px',
+    color: '#6b7280',
+    fontWeight: 500,
+    marginLeft: '39px',
+    fontVariantNumeric: 'tabular-nums',
   },
 };
