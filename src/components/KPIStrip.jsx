@@ -20,7 +20,7 @@ function buildCards(kpis) {
     },
     {
       label: 'Avg Open Rate',
-      value: `${kpis.avgOpenRate.toFixed(1)}%`,
+      value: `${kpis.avgOpenRate.toFixed(2)}%`,
       sub: `Benchmark ${BENCHMARKS.openRate}%`,
       accent: getRateColor(kpis.avgOpenRate, BENCHMARKS.openRate),
       delta: delta(kpis.avgOpenRate, BENCHMARKS.openRate),
@@ -34,7 +34,7 @@ function buildCards(kpis) {
     },
     {
       label: 'Avg CTOR',
-      value: `${kpis.avgCTOR.toFixed(1)}%`,
+      value: `${kpis.avgCTOR.toFixed(2)}%`,
       sub: `Benchmark ${BENCHMARKS.ctorLow}–${BENCHMARKS.ctorHigh}%`,
       accent: getCTORColor(kpis.avgCTOR),
       delta: delta(kpis.avgCTOR, BENCHMARKS.ctorLow),

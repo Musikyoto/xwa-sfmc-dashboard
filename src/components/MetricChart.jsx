@@ -75,7 +75,7 @@ function ValueLabel({ x, y, width, height, value }) {
       fill="#9ca3af"
       style={{ fontVariantNumeric: 'tabular-nums' }}
     >
-      {Number(value).toFixed(1)}%
+      {Number(value).toFixed(2)}%
     </text>
   );
 }

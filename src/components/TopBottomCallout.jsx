@@ -83,7 +83,7 @@ export default function TopBottomCallout({ journeys }) {
         subtitle="By click-to-open rate · min 1000 sends"
         accent={RED}
         journeys={bottom3}
-        formatRate={(j) => `${j.ctor.toFixed(1)}%`}
+        formatRate={(j) => `${j.ctor.toFixed(2)}%`}
         helperFor={(j) =>
           `${j.clicks.toLocaleString()} clicks from ${j.opens.toLocaleString()} opens`
         }
