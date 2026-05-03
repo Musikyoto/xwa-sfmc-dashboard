@@ -59,6 +59,7 @@ function parseCSV(text) {
     .slice(1)
     .filter((l) => l.trim())
     .map((line, i) => {
+      const fields = parseRow(line).map((f) => f.trim()); // trim every field
       const [
         JourneyName,
         JourneyStatus,
@@ -75,7 +76,15 @@ function parseCSV(text) {
         TourConversionRate,
         WeekEnding,
         // BU (index 14) — not needed in the UI, intentionally omitted
-      ] = parseRow(line).map((f) => f.trim()); // trim every field
+      ] = fields;
+      const ActivationDate = fields[15]; // index 15 — US locale text e.g. "12/17/2025 12:00:00 AM"
+
+      // Parse ActivationDate via native Date — handles "M/D/YYYY h:mm:ss AM/PM"
+      let activationDate = null;
+      if (ActivationDate) {
+        const parsed = new Date(ActivationDate);
+        if (!isNaN(parsed.getTime())) activationDate = parsed;
+      }
 
       return {
         id: i + 1,
@@ -94,6 +103,7 @@ function parseCSV(text) {
         tourAttended: Number(TourAttended),
         tourConversionRate: Number(TourConversionRate), // pre-calculated in sheet
         week: WeekEnding,
+        activationDate,
       };
     });
 }

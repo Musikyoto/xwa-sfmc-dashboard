@@ -38,6 +38,7 @@ const COLS = [
   { key: 'tourScheduled',      label: 'Tour Sched',   align: 'right',  minW: 90, sortable: true },
   { key: 'tourAttended',       label: 'Tour Attd',    align: 'right',  minW: 90, sortable: true },
   { key: 'tourConversionRate', label: 'Tour Conv %',  align: 'right',  minW: 100, sortable: true },
+  { key: 'activationDate',     label: 'Activated',    align: 'left',   minW: 140, sortable: true },
 ];
 
 const METRIC_COLS = new Set(['openRate', 'ctr', 'ctor']);
@@ -49,6 +50,17 @@ function fmt(key, val) {
   if (key === 'tourConversionRate') return `${val.toFixed(2)}%`;
   if (typeof val === 'number') return val.toLocaleString();
   return val;
+}
+
+function fmtIsoDate(d) {
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${y}-${m}-${day}`;
+}
+
+function daysSince(d) {
+  return Math.floor((Date.now() - d.getTime()) / 86400000);
 }
 
 const STATUS_STYLES = {
@@ -65,6 +77,12 @@ export default function JourneyTable({ journeys }) {
 
   const sorted = [...journeys].sort((a, b) => {
     const va = a[sortKey], vb = b[sortKey];
+    // Date sort — null treated as the lowest value
+    if (sortKey === 'activationDate') {
+      const ta = va instanceof Date ? va.getTime() : -Infinity;
+      const tb = vb instanceof Date ? vb.getTime() : -Infinity;
+      return sortDir === 'asc' ? ta - tb : tb - ta;
+    }
     if (typeof va === 'number') return sortDir === 'asc' ? va - vb : vb - va;
     return sortDir === 'asc'
       ? String(va).localeCompare(String(vb))
@@ -138,6 +156,7 @@ export default function JourneyTable({ journeys }) {
                     const isMetric = METRIC_COLS.has(col.key);
                     const isStatus = col.key === 'status';
                     const isName = col.key === 'name';
+                    const isActivation = col.key === 'activationDate';
                     const s = isStatus ? (STATUS_STYLES[val] || STATUS_STYLES.Default) : null;
                     const metricCol = isMetric ? ragColor(col.key, val) : null;
 
@@ -150,10 +169,19 @@ export default function JourneyTable({ journeys }) {
                           textAlign: col.align,
                           color: metricCol || '#e6edf3',
                           fontWeight: col.key === 'name' ? 500 : isMetric ? 600 : 400,
-                          fontVariantNumeric: typeof val === 'number' || isMetric ? 'tabular-nums' : undefined,
+                          fontVariantNumeric: typeof val === 'number' || isMetric || isActivation ? 'tabular-nums' : undefined,
                         }}
                       >
-                        {isStatus ? (
+                        {isActivation ? (
+                          val instanceof Date ? (
+                            <span style={{ display: 'inline-flex', alignItems: 'baseline', gap: '6px', justifyContent: 'flex-start' }}>
+                              <span>{fmtIsoDate(val)}</span>
+                              <span style={styles.activationDays}>({daysSince(val)}d)</span>
+                            </span>
+                          ) : (
+                            '—'
+                          )
+                        ) : isStatus ? (
                           <span style={{
                             display: 'inline-flex',
                             alignItems: 'center',
@@ -291,6 +319,10 @@ const styles = {
     left: 0,
     zIndex: 5,
     borderRight: '1px solid #21262d',
+  },
+  activationDays: {
+    fontSize: '10px',
+    color: '#6b7280',
   },
   tableFooter: {
     display: 'flex',
