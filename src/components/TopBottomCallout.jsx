@@ -43,8 +43,8 @@ export default function TopBottomCallout({ journeys }) {
 
   const running = journeys.filter(isRunning);
 
-  // ── Top 3: Running, ≥250 sends, by tour conversion rate desc ────────
-  const top3 = running
+  // ── Top 3: ALL journeys, ≥250 sends, by tour conversion rate desc ───
+  const top3 = journeys
     .filter((j) => j.sends >= 250)
     .sort((a, b) => {
       if (b.tourConversionRate !== a.tourConversionRate) {
@@ -69,7 +69,7 @@ export default function TopBottomCallout({ journeys }) {
     <div className="callout-card" style={styles.card}>
       <Panel
         title="Top 3 performers"
-        subtitle="By tour conversion rate · min 250 sends"
+        subtitle="By tour conversion rate · all journeys · min 250 sends"
         accent={GREEN}
         journeys={top3}
         formatRate={(j) => `${j.tourConversionRate.toFixed(2)}%`}
@@ -80,7 +80,7 @@ export default function TopBottomCallout({ journeys }) {
       <div className="callout-divider" style={styles.divider} />
       <Panel
         title="Needs attention"
-        subtitle="By click-to-open rate · min 1000 sends"
+        subtitle="By click-to-open rate · active journeys · min 1,000 sends"
         accent={RED}
         journeys={bottom3}
         formatRate={(j) => `${j.ctor.toFixed(2)}%`}
